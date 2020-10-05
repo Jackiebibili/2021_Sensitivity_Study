@@ -6,7 +6,6 @@ clear all; clc;
 T = 10; % lbs
 L = 10;  % lbs
 plane_weight = 6;
-Mp = 6;
 Cd_sensor = 0.04; % unitless
 Cd_plane = 0.027; % unitless
 A_wing = 5; % ft^2
@@ -56,11 +55,14 @@ for i=1:length(sensor_length)
     max_laps_int(1,i) = floor(A * sqrt(16*T /(16*X + Y*sensor_length(1,i)^2 )));
 end
 
-
-Ms = 2.5;                   %weight of the sensor
+Mp = 4;                     %takeoff weight of the plane except the sensor
+Ms = 1.5;                   %weight of the sensor
 d  = 2/12;                  %diameter of the sensor
+len = 12/12;                %length of the sensor
 var_span = [-1.5:0.5:1.5];  %span for sensor weight
-var_span2 = [0:0.02:0.2];   %span for sensor diameter
+var_span2 = [0:0.02:0.2];   %span for sensor diameter or length
+var_span3 = [0:0.25:0.8];   %span for sensor length
+
 vel = [0:2:150];            %velocity
 T = 10;                     %thrust in lb
 llap = 3000;                %3000ft / lap
@@ -69,7 +71,8 @@ for i=1:length(var_span2)
     for j=1:length(vel)
        diameter_calc = sqrt(3*(T - Mp - Ms)/(Y * vel(1, j)) - X/Y);
        num_laps_calc = floor(1/(llap * (Mp + Ms)) * (T * vel(1, j) * FT - (X + Y * (d + var_span2(1, i))^2)/3 * vel(1, j)^3 * FT));
-       M3_multi(i,j) =  Ms * diameter_calc * num_laps_calc;
+       
+       M3_multi_diameter(i,j) =  Ms * 4 * diameter_calc * num_laps_calc;
     end
 end
 
@@ -77,14 +80,34 @@ for i=1:length(var_span)
     for j=1:length(vel)
         sensor_weight_calc = T - Mp - (X + Y*d^2)/3 * vel(1, j)^2;
         num_laps_calc = floor(1/(llap * (Mp + (Ms + var_span(1, i)))) * (T * vel(1, j) * FT - (X + Y * d^2)/3 * vel(1, j)^3 * FT));
-        M3_multi_sec(i,j) =  sensor_weight_calc * d * num_laps_calc;
+        
+        M3_multi_sensor_weight(i,j) =  sensor_weight_calc * 4 * d * num_laps_calc;
+    end
+end
+
+for i=1:length(var_span)
+    for j=1:length(vel)
+        num_laps_calc = floor(1/(llap * ((Mp + var_span(1, i)) + Ms)) * (T * vel(1, j) * FT - (X + Y * d^2)/3 * vel(1, j)^3 * FT));
+        
+        M3_multi_plane_weight(i,j) = Ms * d * num_laps_calc;
+    end
+end
+
+for i=1:length(var_span3)
+    for j=1:length(vel)
+        num_laps_calc = floor(1/(llap * (Mp + Ms)) * (T * vel(1, j) * FT - (X + Y * d^2)/3 * vel(1, j)^3 * FT));
+        
+        M3_multi_sensor_length(i,j) = Ms * (len + var_span3(1, i)) * num_laps_calc;
     end
 end
 
 
-subplot(2,1,1);
+
+
+
+subplot(4,1,1);
 for i = 1:length(var_span2)
-    plot(vel, M3_multi(i, :), 'DisplayName', sprintf('d_s = %.2f inches',(d + var_span2(1, i)) * 12));
+    plot(vel, M3_multi_diameter(i, :), 'DisplayName', sprintf('d_s = %.2f inches',(d + var_span2(1, i)) * 12));
     hold on;
 end
 hold off;
@@ -92,11 +115,11 @@ legend('show');
 title('M3_multiply vs speed');
 xlabel('v ft/s');
 ylabel('M3_multiplier');
+xlim([30 100]);
 
-
-subplot(2,1,2);
+subplot(4,1,2);
 for i = 1:length(var_span)
-    plot(vel, M3_multi_sec(i, :), 'DisplayName', sprintf('w_s = %.2f lbs', Ms + var_span(1, i)));
+    plot(vel, M3_multi_sensor_weight(i, :), 'DisplayName', sprintf('w_s = %.2f lbs', Ms + var_span(1, i)));
     hold on;
 end
 hold off;
@@ -104,7 +127,31 @@ legend('show');
 title('M3_multiply vs speed');
 xlabel('v, ft/s');
 ylabel('M3_multiplier');
+xlim([30 100]);
 
+subplot(4,1,3);
+for i = 1:length(var_span)
+    plot(vel, M3_multi_plane_weight(i, :), 'DisplayName', sprintf('w_p = %.2f lbs', Mp + var_span(1, i)));
+    hold on;
+end
+hold off;
+legend('show');
+title('M3_multiply vs speed');
+xlabel('v, ft/s');
+ylabel('M3_multiplier');
+xlim([30 100]);
+
+subplot(4,1,4);
+for i = 1:length(var_span3)
+    plot(vel, M3_multi_sensor_length(i, :), 'DisplayName', sprintf('l_s = %.2f inches', 12 * (len + var_span3(1, i))));
+    hold on;
+end
+hold off;
+legend('show');
+title('M3_multiply vs speed');
+xlabel('v, ft/s');
+ylabel('M3_multiplier');
+xlim([30 100]);
 
 % subplot(3,2,1);
 % plot(12*sensor_length/4, max_velocity);
