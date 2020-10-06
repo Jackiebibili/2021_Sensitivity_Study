@@ -69,19 +69,19 @@ llap = 3000;                %3000ft / lap
 FT = 600;                   %flight time  =  10min
 for i=1:length(var_span2)
     for j=1:length(vel)
-       diameter_calc = sqrt(3*(T - Mp - Ms)/(Y * vel(1, j)) - X/Y);
+       %diameter_calc(1,j) = sqrt(3*(T - Mp - Ms)/(Y * vel(1, j)) - X/Y);
        num_laps_calc = floor(1/(llap * (Mp + Ms)) * (T * vel(1, j) * FT - (X + Y * (d + var_span2(1, i))^2)/3 * vel(1, j)^3 * FT));
        
-       M3_multi_diameter(i,j) =  Ms * 4 * diameter_calc * num_laps_calc;
+       M3_multi_diameter(i,j) =  Ms * 4 * (d + var_span2(1, i)) * num_laps_calc;
     end
 end
 
 for i=1:length(var_span)
     for j=1:length(vel)
-        sensor_weight_calc = T - Mp - (X + Y*d^2)/3 * vel(1, j)^2;
+        %sensor_weight_calc(1,j) = T - Mp - (X + Y*d^2)/3 * vel(1, j)^2;
         num_laps_calc = floor(1/(llap * (Mp + (Ms + var_span(1, i)))) * (T * vel(1, j) * FT - (X + Y * d^2)/3 * vel(1, j)^3 * FT));
         
-        M3_multi_sensor_weight(i,j) =  sensor_weight_calc * 4 * d * num_laps_calc;
+        M3_multi_sensor_weight(i,j) =  (Ms + var_span(1, i)) * 4 * d * num_laps_calc;
     end
 end
 
